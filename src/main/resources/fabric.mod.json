@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "mc",
+	"version": "${version}",
+	"name": "mc",
+	"description": "",
+	"authors": [
+		"eliasnau"
+	],
+	"contact": {
+		"sources": "https://github.com/eliasnau/mc"
+	},
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.github.eliasnau.mc.Mc"
+		],
+		"client": [
+			"io.github.eliasnau.mc.client.McClient"
+		]
+	},
+	"mixins": [
+		"mc.mixins.json",
+		{
+			"config": "mc.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
