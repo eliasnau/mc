@@ -3,6 +3,9 @@ plugins {
 	id 'maven-publish'
 }
 
+// Tag the version with the Minecraft version it's built for, e.g. 0.2.0+26.3.
+version = "${project.version}+${project.minecraft_version}"
+
 repositories {
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
