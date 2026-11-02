@@ -1,0 +1,50 @@
+# Release a new version: either push a tag (git tag v0.2.0 && git push origin v0.2.0)
+# or run this workflow from the Actions tab and enter a version (builds main and tags it).
+
+name: release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, e.g. 0.2.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: resolve version
+        id: version
+        run: |
+          v="${{ github.event_name == 'push' && github.ref_name || inputs.version }}"
+          v="${v#v}"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+      - name: checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'push' && github.ref || 'main' }}
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+      - name: setup jdk
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'microsoft'
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: build
+        run: ./gradlew build -Pversion=${{ steps.version.outputs.version }}
+      - name: create github release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" build/libs/*.jar \
+            --target "$(git rev-parse HEAD)" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --generate-notes
