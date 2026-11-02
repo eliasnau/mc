@@ -2,7 +2,19 @@
 	"required": true,
 	"package": "io.github.eliasnau.mc.client.mixin",
 	"compatibilityLevel": "JAVA_25",
-	"client": [],
+	"client": [
+		"spatial_gui.AbstractContainerScreenAccessor",
+		"spatial_gui.AbstractContainerScreenMixin",
+		"spatial_gui.CameraMixin",
+		"spatial_gui.GameRendererAccessor",
+		"spatial_gui.GameRendererMixin",
+		"spatial_gui.GuiMixin",
+		"spatial_gui.GuiRendererMixin",
+		"spatial_gui.HumanoidModelMixin",
+		"spatial_gui.LivingEntityRendererMixin",
+		"spatial_gui.MouseHandlerMixin",
+		"spatial_gui.ScreenMixin"
+	],
 	"injectors": {
 		"defaultRequire": 1
 	},
