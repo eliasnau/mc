@@ -2,5 +2,18 @@
 	"key.category.mc.main": "mc",
 	"key.mc.features": "Open Features Menu",
 	"gui.mc.features": "Features",
-	"gui.mc.features.settings": "Settings..."
+	"gui.mc.features.settings": "Settings...",
+	"feature.mc.spatial_gui": "Spatial GUI",
+	"gui.mc.spatial_gui.containers": "Inventories",
+	"gui.mc.spatial_gui.chat": "Chat",
+	"gui.mc.spatial_gui.menus": "Pause Menu",
+	"gui.mc.spatial_gui.books_and_signs": "Books & Signs",
+	"gui.mc.spatial_gui.face_panel": "Face Panel",
+	"gui.mc.spatial_gui.panel_scale": "Panel Size",
+	"gui.mc.spatial_gui.camera_distance": "Camera Distance",
+	"gui.mc.spatial_gui.arm_reach": "Arm Reach",
+	"gui.mc.spatial_gui.floating_item": "Floating Cursor Item",
+	"gui.mc.spatial_gui.shoulder_swap": "Auto Shoulder Swap",
+	"gui.mc.spatial_gui.background_blur": "Background Blur",
+	"gui.mc.spatial_gui.settings": "Spatial GUI Settings"
 }
