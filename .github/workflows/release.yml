@@ -1,5 +1,6 @@
 # Release a new version: either push a tag (git tag v0.2.0 && git push origin v0.2.0)
 # or run this workflow from the Actions tab and enter a version (builds main and tags it).
+# Versions with a suffix, like 0.2.0-beta.1, are published as pre-releases.
 
 name: release
 on:
@@ -8,43 +9,69 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release, e.g. 0.2.0'
+        description: 'Version to release, e.g. 0.2.0 or 0.2.0-beta.1'
         required: true
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+
 jobs:
   release:
     runs-on: blacksmith-2vcpu-ubuntu-2404
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - name: resolve version
         id: version
+        env:
+          RAW_VERSION: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+          IS_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          v="${{ github.event_name == 'push' && github.ref_name || inputs.version }}"
-          v="${v#v}"
+          v="${RAW_VERSION#v}"
+          if [[ ! "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$RAW_VERSION' is not a valid version, expected something like 0.2.0 or 0.2.0-beta.1"
+            exit 1
+          fi
+          if gh release view "v$v" > /dev/null 2>&1; then
+            echo "::error::Release v$v already exists"
+            exit 1
+          fi
+          if [[ "$IS_DISPATCH" == true ]] && git ls-remote --exit-code --tags "https://github.com/$GH_REPO" "refs/tags/v$v" > /dev/null; then
+            echo "::error::Tag v$v already exists, push the tag instead or pick another version"
+            exit 1
+          fi
           echo "version=$v" >> "$GITHUB_OUTPUT"
           echo "tag=v$v" >> "$GITHUB_OUTPUT"
+          [[ "$v" == *-* ]] && echo "prerelease=true" >> "$GITHUB_OUTPUT" || echo "prerelease=false" >> "$GITHUB_OUTPUT"
       - name: checkout repository
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event_name == 'push' && github.ref || 'main' }}
-      - name: validate gradle wrapper
-        uses: gradle/actions/wrapper-validation@v6
       - name: setup jdk
         uses: actions/setup-java@v5
         with:
           java-version: '25'
           distribution: 'microsoft'
+      # Caches Gradle and Minecraft downloads between runs, and validates the wrapper.
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
       - name: build
-        run: ./gradlew build -Pversion=${{ steps.version.outputs.version }}
+        run: ./gradlew build -Pversion="${{ steps.version.outputs.version }}"
       - name: create github release
         env:
-          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
         run: |
-          gh release create "${{ steps.version.outputs.tag }}" build/libs/*.jar \
+          # Only the mod jar, not the sources jar.
+          jar=$(ls build/libs/*.jar | grep -v -- '-sources\.jar$')
+          gh release create "$TAG" $jar \
             --target "$(git rev-parse HEAD)" \
-            --title "${{ steps.version.outputs.tag }}" \
-            --generate-notes
+            --title "$TAG" \
+            --generate-notes \
+            $([[ "$PRERELEASE" == true ]] && echo --prerelease)
